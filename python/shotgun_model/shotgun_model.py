@@ -75,6 +75,7 @@ class ShotgunModel(ShotgunQueryModel):
         """
         super(ShotgunModel, self).__init__(parent, bg_load_thumbs, bg_task_manager)
 
+        self._data_handler_class = ShotgunFindDataHandler
         # default value so that __repr__ can be used before load_data
         self.__entity_type = None
 
@@ -353,7 +354,7 @@ class ShotgunModel(ShotgunQueryModel):
         self._log_debug("Filter Presets: %s" % self.__additional_filter_presets)
 
         # get the cache path based on these new data query parameters
-        self._data_handler = ShotgunFindDataHandler(
+        self._data_handler = self._data_handler_class(
             self.__entity_type,
             self.__filters,
             self.__order,
@@ -492,7 +493,6 @@ class ShotgunModel(ShotgunQueryModel):
         """
         data = item.data(self.SG_ASSOCIATED_FIELD_ROLE)
         field = data["name"]
-
         if isinstance(sg_item[field], dict) and "type" in sg_item[field]:
             # This is scenario 1 described above.
             item.setToolTip(

@@ -409,12 +409,13 @@ class ShotgunQueryModel(QtGui.QStandardItemModel):
     # abstract, protected methods. these methods should be implemented by
     # subclasses to provide a consistent developer experience.
 
-    def _create_item(self, parent, data_item):
+    def _create_item(self, parent, data_item, top_index=None):
         """
         Creates a model item for the tree given data out of the data store
 
         :param :class:`~PySide.QtGui.QStandardItem` parent: Model item to parent the node under
         :param :class:`ShotgunItemData` data_item: Data to populate new item with
+        :param int top_index: Indicates an index the item should be placed on the tree
 
         :returns: Model item
         :rtype: :class:`ShotgunStandardItem`
@@ -455,7 +456,7 @@ class ShotgunQueryModel(QtGui.QStandardItemModel):
             calculations and other manipulations of the data before it is
             passed on to the model class.
 
-        :param data: a shotgun dictionary, as retunrned by a CRUD SG API call.
+        :param data: a shotgun dictionary, as retunrned by a CRUD PTR API call.
         :returns: should return a shotgun dictionary, of the same form as the
             input.
         """
@@ -594,7 +595,7 @@ class ShotgunQueryModel(QtGui.QStandardItemModel):
         Called when an item is created.
 
         :param item: Shotgun model item that requires a tooltip.
-        :param data: Dictionary of the SG data associated with the model.
+        :param data: Dictionary of the PTR data associated with the model.
         """
         # the default implementation does not set a tooltip
         pass
@@ -757,7 +758,6 @@ class ShotgunQueryModel(QtGui.QStandardItemModel):
         item = self._get_item_by_unique_id(uid)
 
         if not item:
-
             # item was not part of the model. Attempt to load its parents until it is visible.
             self._log_debug(
                 "Item %s does not exist in the tree - will expand tree." % data_item
@@ -920,7 +920,7 @@ class ShotgunQueryModel(QtGui.QStandardItemModel):
             return
         self.__current_work_id = None
 
-        full_msg = "Error retrieving data from ShotGrid: %s" % msg
+        full_msg = "Error retrieving data from Flow Production Tracking: %s" % msg
         self.data_refresh_fail.emit(full_msg)
         self._log_warning(full_msg)
 
@@ -990,7 +990,9 @@ class ShotgunQueryModel(QtGui.QStandardItemModel):
 
         :param list sg_data: Shotgun data payload.
         """
-        self._log_debug("--> ShotGrid data arrived. (%s records)" % len(sg_data))
+        self._log_debug(
+            "--> Flow Production Tracking data arrived. (%s records)" % len(sg_data)
+        )
 
         # pre-process data
         sg_data = self._before_data_processing(sg_data)
@@ -1001,7 +1003,8 @@ class ShotgunQueryModel(QtGui.QStandardItemModel):
         modified_items = self._data_handler.update_data(sg_data)
 
         self._log_debug(
-            "ShotGrid data contained %d modifications" % len(modified_items)
+            "Flow Production Tracking data contained %d modifications"
+            % len(modified_items)
         )
 
         if len(modified_items) > 0:
@@ -1024,7 +1027,7 @@ class ShotgunQueryModel(QtGui.QStandardItemModel):
 
             # we have some items loaded into our qt model. Look at the diff
             # and make sure that what's loaded in the model is up to date.
-            for item in modified_items:
+            for idx, item in enumerate(modified_items):
                 data_item = item["data"]
 
                 self._log_debug("Processing change %s" % item)
@@ -1052,7 +1055,7 @@ class ShotgunQueryModel(QtGui.QStandardItemModel):
                             self._log_debug(
                                 "Creating new model item for %s" % data_item
                             )
-                            # Double check that the item we pulled from SG
+                            # Double check that the item we pulled from PTR
                             # was not already added by a fetchMore on the
                             # model.
                             # If it is the case, we just update the existing
@@ -1071,7 +1074,11 @@ class ShotgunQueryModel(QtGui.QStandardItemModel):
                                 self._log_debug(
                                     "Creating new model " "item for %s" % data_item
                                 )
-                                self._create_item(parent_model_item, data_item)
+                                # Incoming items were added to the end.
+                                # We place them together at the top instead.
+                                self._create_item(
+                                    parent_model_item, data_item, top_index=idx
+                                )
                 elif item["mode"] == self._data_handler.DELETED:
                     # see if the node exists in the tree, in that case delete it.
                     # we check if it exists in the model because it may not have been

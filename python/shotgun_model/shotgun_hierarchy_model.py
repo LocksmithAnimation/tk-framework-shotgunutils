@@ -211,8 +211,6 @@ class ShotgunHierarchyModel(ShotgunQueryModel):
                 "Model item refreshed: %s", item.data(self.parent()._SG_ITEM_UNIQUE_ID)
             )
             self.parent()._node_refreshed.disconnect(self._node_refreshed)
-            utils = sgtk.platform.current_bundle().import_module("utils")
-            utils.safe_delete_later(self)
 
             # Try again to async deep load the node and the next tokens.
             self.parent().async_item_from_paths(self._path_to_refresh)
@@ -518,12 +516,13 @@ class ShotgunHierarchyModel(ShotgunQueryModel):
         if icon:
             item.setIcon(icon)
 
-    def _create_item(self, parent, data_item):
+    def _create_item(self, parent, data_item, top_index=None):
         """
         Creates a model item for the tree given data out of the data store
 
         :param :class:`~PySide.QtGui.QStandardItem` parent: Model item to parent the node under
         :param :class:`ShotgunItemData` data_item: Data to populate new item with
+        :param int top_index: Indicates an index the item should be placed on the tree
 
         :returns: Model item
         :rtype: :class:`ShotgunStandardItem`
@@ -655,7 +654,7 @@ class ShotgunHierarchyModel(ShotgunQueryModel):
         # warn if the path is longer than the windows max path limitation
         if sgtk.util.is_windows() and len(data_cache_path) > 250:
             self._log_warning(
-                "ShotGrid hierarchy data cache file path may be affected by "
+                "Flow Production Tracking hierarchy data cache file path may be affected by "
                 "windows MAX_PATH limitation."
             )
 
@@ -685,7 +684,7 @@ class ShotgunHierarchyModel(ShotgunQueryModel):
         ):
             return (
                 False,
-                "The version of SG being used does not support querying for the project "
+                "The version of PTR being used does not support querying for the project "
                 "hierarchy. v7.0.2 is required.",
             )
         elif not hasattr(sg_connection, "nav_expand"):

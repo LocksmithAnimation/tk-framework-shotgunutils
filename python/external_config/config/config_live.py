@@ -14,7 +14,11 @@ import fnmatch
 import hashlib
 from .config_base import ExternalConfiguration
 from .. import file_cache
-from tank_vendor import six
+
+try:
+    from tank_vendor import sgutils
+except ImportError:
+    from tank_vendor import six as sgutils
 
 
 logger = sgtk.platform.get_logger(__name__)
@@ -61,7 +65,7 @@ class LiveExternalConfiguration(ExternalConfiguration):
         :param str pipeline_config_uri: Descriptor URI string for the config
         :param str pipeline_config_folder: Folder where the configuration is located
         """
-        super(LiveExternalConfiguration, self).__init__(
+        super().__init__(
             parent,
             bg_task_manager,
             plugin_id,
@@ -161,8 +165,8 @@ class LiveExternalConfiguration(ExternalConfiguration):
                 full_path = os.path.join(root, file_name)
                 # stash the filename and the mod date into the hash
                 num_files += 1
-                env_hash.update(six.ensure_binary(full_path))
-                env_hash.update(six.ensure_binary(str(os.path.getmtime(full_path))))
+                env_hash.update(sgutils.ensure_binary(full_path))
+                env_hash.update(sgutils.ensure_binary(str(os.path.getmtime(full_path))))
 
         logger.debug("Checked %d files" % num_files)
         return env_hash.hexdigest()

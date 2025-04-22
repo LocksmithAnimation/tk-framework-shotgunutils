@@ -13,9 +13,12 @@ import sgtk
 import hashlib
 import json
 
-from tank_vendor.shotgun_api3.lib import six
-
 from sgtk.platform.qt import QtCore, QtGui
+
+try:
+    from tank_vendor import sgutils
+except ImportError:
+    from tank_vendor import six as sgutils
 
 logger = sgtk.platform.get_logger(__name__)
 
@@ -55,7 +58,7 @@ class ConfigurationState(QtCore.QObject):
         :param parent: QT parent object.
         :type parent: :class:`~PySide.QtGui.QObject`
         """
-        super(ConfigurationState, self).__init__(parent)
+        super().__init__(parent)
 
         self._software_model = ConfigStateModel("Software", [], bg_task_manager, parent)
 
@@ -167,9 +170,7 @@ class ConfigStateModel(ShotgunModel):
         :param parent: QT parent object.
         :type parent: :class:`~PySide.QtGui.QObject`
         """
-        super(ConfigStateModel, self).__init__(
-            parent, download_thumbs=False, bg_task_manager=bg_task_manager
-        )
+        super().__init__(parent, download_thumbs=False, bg_task_manager=bg_task_manager)
         self._entity_type = entity_type
         self._filters = filters
 
@@ -203,7 +204,7 @@ class ConfigStateModel(ShotgunModel):
             hash_data = {"sg_data": self._get_sg_data(), "entity_ids": self.entity_ids}
             hash_data_str = json.dumps(hash_data, sort_keys=True)
 
-            return hashlib.md5(six.ensure_binary(hash_data_str)).hexdigest()
+            return hashlib.md5(sgutils.ensure_binary(hash_data_str)).hexdigest()
 
     def _get_sg_data(self):
         """

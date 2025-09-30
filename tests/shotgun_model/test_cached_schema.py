@@ -10,9 +10,7 @@
 
 import time
 
-import mock
-
-from tank_vendor import six
+from unittest import mock
 
 from tank_test.tank_test_base import setUpModule  # noqa
 from base_test import TestShotgunUtilsFramework
